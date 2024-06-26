@@ -50,27 +50,35 @@
       try {
         const response = await fetch('http://localhost:8080/auth/login', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer NCC-1701'
+           },
           body: JSON.stringify(formData)
         });
 
         const data = await this.handleApiResponse(response);
 
         if (data === "Login successful!") {
-          this.router.push("/dashboard");
-          // Implement your login success logic here, such as storing a token or redirecting
-          this.showAlert("Login successful");
-          // this.$router.push('/dashboard');  // Change '/dashboard' to your desired route
-        } else if (data === "Welcome! Your account is pending approval.") {
-          this.showAlert("Welcome! Your account is pending approval.");
+          localStorage.setItem('userId', data.userId);
+        localStorage.setItem('userRole', data.role);
+
+        // Redirect based on role
+        if (data.role === 'EMPLOYEE') {
+          this.router.push("/employee-dashboard");
+        } else if (data.role === 'CUSTOMER') {
+          this.router.push("/customer-dashboard");
         } else {
-          this.showAlert(data);
+          this.showAlert("Unknown user role");
         }
-      } catch (error) {
-        this.logError(error, "LoginPage", "LoginPage.vue");
-        this.showAlert("An error occurred while logging in, please try again later!");
+      } else {
+        this.showAlert(data.message);
       }
-    },
+    } catch (error) {
+      this.logError(error, "LoginPage", "LoginPage.vue");
+      this.showAlert("An error occurred while logging in, please try again later!");
+    }
+  },
     async handleApiResponse(response) {
       const data = await response.text();
       if (response.ok) {

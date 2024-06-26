@@ -55,8 +55,7 @@ public class AuthController {
                 if (user.getUserAccountStatus() == UserAccountStatus.PENDING) {
                     return ResponseEntity.ok("Welcome! Your account is pending approval.");
                 }
-                // Implement your token generation logic here and return it.
-                // For simplicity, we are returning a success message.
+                // JWT token creation
                 return ResponseEntity.ok("Login successful!");
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
