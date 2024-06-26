@@ -52,35 +52,43 @@
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer NCC-1701'
            },
           body: JSON.stringify(formData)
         });
 
         const data = await this.handleApiResponse(response);
 
-        if (data === "Login successful!") {
-          localStorage.setItem('userId', data.userId);
-        localStorage.setItem('userRole', data.role);
+        if (data.message === "Login successful!") {
+          // Fetch user details using email
+          const userResponse = await fetch(`http://localhost:8080/users/email?email=${data.email}`, {
+            method: 'GET',
+            headers: { 
+              'Content-Type': 'application/json'
+            }
+          });
+          const userData = await userResponse.json();
 
-        // Redirect based on role
-        if (data.role === 'EMPLOYEE') {
-          this.router.push("/employee-dashboard");
-        } else if (data.role === 'CUSTOMER') {
-          this.router.push("/customer-dashboard");
+          localStorage.setItem('userId', userData.id);
+          localStorage.setItem('userRole', userData.role);
+
+          // Redirect based on role
+          if (userData.role === 'EMPLOYEE') {
+            this.router.push("/employee-dashboard");
+          } else if (userData.role === 'CUSTOMER') {
+            this.router.push("/customer-dashboard");
+          } else {
+            this.showAlert("Unknown user role");
+          }
         } else {
-          this.showAlert("Unknown user role");
+          this.showAlert(data);
         }
-      } else {
-        this.showAlert(data.message);
+      } catch (error) {
+        this.logError(error, "LoginPage", "LoginPage.vue");
+        this.showAlert("An error occurred while logging in, please try again later!");
       }
-    } catch (error) {
-      this.logError(error, "LoginPage", "LoginPage.vue");
-      this.showAlert("An error occurred while logging in, please try again later!");
-    }
-  },
+    },
     async handleApiResponse(response) {
-      const data = await response.text();
+      const data = await response.json();
       if (response.ok) {
         return data;
       } else {
@@ -94,8 +102,8 @@
       console.error(`Error in ${context} at ${location}:`, error);
     }
   }
-  }
-  </script>
+}
+</script>
   
   <style scoped>
   html, body {
