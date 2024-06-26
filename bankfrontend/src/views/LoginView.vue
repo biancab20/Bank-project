@@ -27,6 +27,7 @@
   </template>
   
   <script>
+    import { useRouter } from 'vue-router';
   export default {
     name: 'LoginPage',
     data() {
@@ -34,6 +35,10 @@
         email: '',
         password: ''
       }
+    },
+    setup() {
+      const router = useRouter();
+      return { router };
     },
     methods: {
       async onSubmit() {
@@ -52,6 +57,7 @@
         const data = await this.handleApiResponse(response);
 
         if (data === "Login successful!") {
+          this.router.push("/dashboard");
           // Implement your login success logic here, such as storing a token or redirecting
           this.showAlert("Login successful");
           // this.$router.push('/dashboard');  // Change '/dashboard' to your desired route
