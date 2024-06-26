@@ -2,6 +2,7 @@ package inholland.bankapi.controller;
 
 import inholland.bankapi.model.User;
 import inholland.bankapi.model.UserAccountStatus;
+import inholland.bankapi.model.UserRole;
 import inholland.bankapi.model.dto.LoginDTO;
 import inholland.bankapi.model.dto.UserDTO;
 import inholland.bankapi.model.dto.UserResponseDTO;
@@ -25,16 +26,6 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody UserDTO userDTO) {
         try {
-            userDTO = new UserDTO(
-                    userDTO.firstName(),
-                    userDTO.lastName(),
-                    userDTO.bsn(),
-                    userDTO.phoneNumber(),
-                    userDTO.email(),
-                    bCryptPasswordEncoder.encode(userDTO.password()), // Encode the password
-                    userDTO.role(),
-                    userDTO.userAccountStatus()
-            );
             User newUser = userService.addUser(userDTO);
             UserResponseDTO responseDTO = new UserResponseDTO(
                     newUser.getId(),
@@ -51,6 +42,7 @@ public class AuthController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
+
 
 
     @PostMapping("/login")

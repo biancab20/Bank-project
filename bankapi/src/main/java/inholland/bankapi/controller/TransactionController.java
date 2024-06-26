@@ -6,9 +6,10 @@ import inholland.bankapi.model.dto.TransactionDTO;
 import inholland.bankapi.model.dto.TransactionResponseDTO;
 import inholland.bankapi.service.TransactionService;
 import inholland.bankapi.service.UserService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+//import org.springframework.security.core.annotation.AuthenticationPrincipal;
+//import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -19,25 +20,22 @@ import java.util.List;
 public class TransactionController {
 
     private final TransactionService transactionService;
-    private final UserService userService;
 
-    public TransactionController(TransactionService transactionService, UserService userService) {
+    public TransactionController(TransactionService transactionService) {
         this.transactionService = transactionService;
-        this.userService = userService;
     }
 
     @PostMapping
-    public ResponseEntity<TransactionResponseDTO> createTransaction(@RequestBody TransactionDTO transactionDTO) {
-        TransactionResponseDTO responseDTO = transactionService.createTransaction(transactionDTO);
-        return ResponseEntity.ok(responseDTO);
+    public ResponseEntity<?> createTransaction(@RequestBody TransactionDTO transactionDTO) {
+        try {
+            TransactionResponseDTO createdTransaction = transactionService.createTransaction(transactionDTO);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdTransaction);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
-    @PostMapping("/transfer")
-    public ResponseEntity<Transaction> transferFunds(@AuthenticationPrincipal UserDetails userDetails, @RequestBody TransactionDTO transactionDTO) {
-        User user = userService.getUserByEmail(userDetails.getUsername());
-        Transaction transaction = transactionService.transferFunds(user, transactionDTO);
-        return ResponseEntity.ok(transaction);
-    }
-//working????????
 
     @GetMapping
     public ResponseEntity<List<TransactionResponseDTO>> getAllTransactions() {
@@ -45,9 +43,9 @@ public class TransactionController {
         return ResponseEntity.ok(responseDTOs);
     }
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<TransactionResponseDTO>> getTransactionsByUserId(@PathVariable Long userId) {
-        List<TransactionResponseDTO> responseDTOs = transactionService.getTransactionsByUserId(userId);
+    @GetMapping("/history/{userId}")
+    public ResponseEntity<List<TransactionResponseDTO>> getTransactionHistoryByUserId(@PathVariable Long userId) {
+        List<TransactionResponseDTO> responseDTOs = transactionService.getTransactionHistoryByUserId(userId);
         return ResponseEntity.ok(responseDTOs);
     }
 }

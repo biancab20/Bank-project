@@ -22,9 +22,11 @@ public class AccountService {
         this.userRepository = userRepository;
         this.ibanService = ibanService;
     }
-    public Account createAccount(AccountDTO accountDTO) {
+    public Account createAccount(AccountDTO accountDTO, double dailyLimit, double absoluteLimit) {
         Account account = mapObjectToAccount(accountDTO);
         account.setIban(IbanService.generateIban());
+        account.setDailyLimit(dailyLimit);
+        account.setAbsoluteLimit(absoluteLimit);
         return accountRepository.save(account);
     }
     private Account mapObjectToAccount(AccountDTO accountDTO) {
@@ -40,10 +42,6 @@ public class AccountService {
 
         return account;
     }
-    public List<Account> getAccountsByUser(User user) {
-        return accountRepository.findByOwner(user);
-    }
-
     public List<Account> getAllAccounts() {
         return accountRepository.findAll();
     }
@@ -51,9 +49,13 @@ public class AccountService {
     public List<Account> getAccountsByUserId(Long userId) {
         return accountRepository.findByOwner_Id(userId);
     }
+    public Account updateAccount(Long accountId, AccountDTO accountDTO) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new EntityNotFoundException("Account not found."));
 
-    public void deleteAccount(Long accountId) {
-        accountRepository.deleteById(accountId);
+        account.setDailyLimit(accountDTO.dailyLimit());
+        account.setAbsoluteLimit(accountDTO.absoluteLimit());
+
+        return accountRepository.save(account);
     }
-
 }

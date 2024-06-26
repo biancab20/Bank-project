@@ -1,6 +1,7 @@
 package inholland.bankapi.controller;
 
 import inholland.bankapi.model.User;
+import inholland.bankapi.model.UserAccountStatus;
 import inholland.bankapi.model.dto.UserDTO;
 import inholland.bankapi.model.dto.UserResponseDTO;
 import inholland.bankapi.service.UserService;
@@ -57,12 +58,6 @@ public class UserController {
         return ResponseEntity.ok(responseDTO);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
-    }
-
     @PutMapping("/{id}")
     public ResponseEntity<UserResponseDTO> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
         User user = userService.updateUser(id, userDTO);
@@ -82,6 +77,37 @@ public class UserController {
     @PostMapping
     public ResponseEntity<UserResponseDTO> addUser(@RequestBody UserDTO userDTO) {
         User user = userService.addUser(userDTO);
+        UserResponseDTO responseDTO = new UserResponseDTO(
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getBsn(),
+                user.getPhoneNumber(),
+                user.getEmail(),
+                user.getRole(),
+                user.getUserAccountStatus()
+        );
+        return ResponseEntity.ok(responseDTO);
+    }
+    @PutMapping("/approve/{id}")
+    public ResponseEntity<UserResponseDTO> approveCustomer(@PathVariable Long id) {
+        User user = userService.approveCustomer(id);
+        UserResponseDTO responseDTO = new UserResponseDTO(
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getBsn(),
+                user.getPhoneNumber(),
+                user.getEmail(),
+                user.getRole(),
+                user.getUserAccountStatus()
+        );
+        return ResponseEntity.ok(responseDTO);
+    }
+    @PutMapping("/deactivate/{id}")
+    public ResponseEntity<UserResponseDTO> deactivateUser(@PathVariable Long id) {
+        userService.deactivateUser(id);
+        User user = userService.getUserById(id);
         UserResponseDTO responseDTO = new UserResponseDTO(
                 user.getId(),
                 user.getFirstName(),

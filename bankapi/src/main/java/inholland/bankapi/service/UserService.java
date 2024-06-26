@@ -1,8 +1,9 @@
 package inholland.bankapi.service;
 
-import inholland.bankapi.model.User;
+import inholland.bankapi.model.*;
 import inholland.bankapi.model.dto.UserDTO;
 import inholland.bankapi.model.dto.UserResponseDTO;
+import inholland.bankapi.repository.AccountRepository;
 import inholland.bankapi.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -15,11 +16,13 @@ import java.util.stream.Collectors;
 @Service
 public class UserService {
     private final UserRepository userRepository;
+    private final AccountRepository accountRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    public UserService(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder) {
+    public UserService(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder, AccountRepository accountRepository) {
         this.userRepository = userRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.accountRepository = accountRepository;
     }
     public List<UserResponseDTO> getAllUsers() {
         return userRepository.findAll().stream()
@@ -32,8 +35,11 @@ public class UserService {
         }
         User user = mapObjectToUser(userDTO);
         user.setPassword(bCryptPasswordEncoder.encode(userDTO.password()));
+        user.setRole(UserRole.CUSTOMER); // Setting default role
+        user.setUserAccountStatus(UserAccountStatus.PENDING); // Setting default account status
         return userRepository.save(user);
     }
+
     private User mapObjectToUser(UserDTO userDTO) {
         User user = new User();
         user.setFirstName(userDTO.firstName());
@@ -41,8 +47,6 @@ public class UserService {
         user.setBsn(userDTO.bsn());
         user.setEmail(userDTO.email());
         user.setPhoneNumber(userDTO.phoneNumber());
-        user.setRole(userDTO.role());
-        user.setUserAccountStatus(userDTO.userAccountStatus());
         return user;
     }
 
@@ -58,13 +62,6 @@ public class UserService {
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("User not found."));
-    }
-
-    public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new EntityNotFoundException("User not found.");
-        }
-        userRepository.deleteById(id);
     }
 
     public User updateUser(Long id, UserDTO userDTO) {
@@ -84,5 +81,48 @@ public class UserService {
         }
 
         return userRepository.save(existingUser);
+    }
+    public User approveCustomer(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found."));
+
+        if (user.getUserAccountStatus() != UserAccountStatus.PENDING) {
+            throw new IllegalArgumentException("Only pending accounts can be approved.");
+        }
+
+        user.setUserAccountStatus(UserAccountStatus.ACTIVE);
+        user = userRepository.save(user);
+
+        // Create checking and savings accounts
+        createAccountForUser(user, AccountType.CHECKING);
+        createAccountForUser(user, AccountType.SAVINGS);
+
+        return user;
+    }
+    private void createAccountForUser(User user, AccountType accountType) {
+        Account account = new Account();
+        account.setOwner(user);
+        account.setType(accountType);
+        account.setBalance(0.0);
+        account.setDailyLimit(1000.0); // Example limit
+        account.setAbsoluteLimit(0.0);
+        account.setIban(IbanService.generateIban());
+        account.setStatus(AccountStatus.ACTIVE);
+
+        accountRepository.save(account);
+    }
+    public void deactivateUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found."));
+
+        user.setUserAccountStatus(UserAccountStatus.CLOSED);
+        userRepository.save(user);
+
+        // Deactivate all associated accounts
+        List<Account> userAccounts = accountRepository.findByOwner(user);
+        for (Account account : userAccounts) {
+            account.setStatus(AccountStatus.INACTIVE);
+            accountRepository.save(account);
+        }
     }
 }

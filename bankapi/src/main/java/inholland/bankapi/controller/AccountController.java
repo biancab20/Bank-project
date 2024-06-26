@@ -20,8 +20,8 @@ public class AccountController {
     }
 
     @PostMapping
-    public ResponseEntity<AccountDTO> createAccount(@RequestBody AccountDTO accountDTO) {
-        Account account = accountService.createAccount(accountDTO);
+    public ResponseEntity<AccountDTO> createAccount(@RequestBody AccountDTO accountDTO, @RequestParam double dailyLimit, @RequestParam double absoluteLimit) {
+        Account account = accountService.createAccount(accountDTO, dailyLimit, absoluteLimit);
         AccountDTO responseDTO = new AccountDTO(
                 account.getAccountId(),
                 account.getBalance(),
@@ -66,10 +66,19 @@ public class AccountController {
         )).toList();
         return ResponseEntity.ok(responseDTOs);
     }
-
-    @DeleteMapping("/{accountId}")
-    public ResponseEntity<Void> deleteAccount(@PathVariable Long accountId) {
-        accountService.deleteAccount(accountId);
-        return ResponseEntity.noContent().build();
+    @PutMapping("/{accountId}")
+    public ResponseEntity<AccountDTO> updateAccount(@PathVariable Long accountId, @RequestBody AccountDTO accountDTO) {
+        Account account = accountService.updateAccount(accountId, accountDTO);
+        AccountDTO responseDTO = new AccountDTO(
+                account.getAccountId(),
+                account.getBalance(),
+                account.getDailyLimit(),
+                account.getAbsoluteLimit(),
+                account.getIban(),
+                account.getStatus(),
+                account.getType(),
+                account.getOwner().getId()
+        );
+        return ResponseEntity.ok(responseDTO);
     }
 }
