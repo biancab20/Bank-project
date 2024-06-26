@@ -33,6 +33,9 @@ public class UserService {
         if (userRepository.findByEmail(userDTO.email()).isPresent()) {
             throw new IllegalArgumentException("Email address already in use.");
         }
+        if (userRepository.findByBsn(userDTO.bsn()).isPresent()) {
+            throw new IllegalArgumentException("BSN already in use.");
+        }
         User user = mapObjectToUser(userDTO);
         user.setPassword(bCryptPasswordEncoder.encode(userDTO.password()));
         user.setRole(UserRole.CUSTOMER); // Setting default role

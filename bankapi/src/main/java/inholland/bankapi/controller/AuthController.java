@@ -23,9 +23,11 @@ public class AuthController {
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 
+    @CrossOrigin(origins = "http://localhost:5173")
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody UserDTO userDTO) {
         try {
+            // Set default role and user account status in the service layer
             User newUser = userService.addUser(userDTO);
             UserResponseDTO responseDTO = new UserResponseDTO(
                     newUser.getId(),
@@ -44,7 +46,7 @@ public class AuthController {
     }
 
 
-
+    @CrossOrigin(origins = "http://localhost:5173")
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginDTO loginDTO) {
         try {
