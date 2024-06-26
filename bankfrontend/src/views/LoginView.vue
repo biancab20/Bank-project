@@ -19,7 +19,7 @@
             <button type="submit">Login</button>
           </form>
           <p class="signup-link">
-            Don't have an account yet? <router-link to="/signup">Sign up!</router-link>
+            Don't have an account yet? <router-link to="/register">Sign up!</router-link>
           </p>
         </div>
       </div>
@@ -36,12 +36,50 @@
       }
     },
     methods: {
-      onSubmit() {
-        console.log('Email:', this.email)
-        console.log('Password:', this.password)
-        // Add your login logic here
+      async onSubmit() {
+      const formData = {
+        email: this.email,
+        password: this.password
+      };
+
+      try {
+        const response = await fetch('http://localhost:8080/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+
+        const data = await this.handleApiResponse(response);
+
+        if (data === "Login successful!") {
+          // Implement your login success logic here, such as storing a token or redirecting
+          this.showAlert("Login successful");
+          // this.$router.push('/dashboard');  // Change '/dashboard' to your desired route
+        } else if (data === "Welcome! Your account is pending approval.") {
+          this.showAlert("Welcome! Your account is pending approval.");
+        } else {
+          this.showAlert(data);
+        }
+      } catch (error) {
+        this.logError(error, "LoginPage", "LoginPage.vue");
+        this.showAlert("An error occurred while logging in, please try again later!");
       }
+    },
+    async handleApiResponse(response) {
+      const data = await response.text();
+      if (response.ok) {
+        return data;
+      } else {
+        return Promise.reject(data);
+      }
+    },
+    showAlert(message) {
+      alert(message);
+    },
+    logError(error, context, location) {
+      console.error(`Error in ${context} at ${location}:`, error);
     }
+  }
   }
   </script>
   

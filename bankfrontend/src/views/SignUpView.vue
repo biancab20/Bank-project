@@ -34,86 +34,83 @@
   </template>
   
   <script>
-export default {
-  name: 'SignUpPage',
-  data() {
-    return {
-      firstName: '',
-      lastName: '',
-      bsn: '',
-      phoneNumber: '',
-      email: '',
-      password: ''
-    }
-  },
-  methods: {
-    async onSubmit() {
-
-      const formData = {
-        firstName: this.firstName,
-        lastName: this.lastName,
-        bsn: this.bsn,
-        phoneNumber: this.phoneNumber,
-        email: this.email,
-        password: this.password,
-      };
-
-      // Check for empty fields
-      if (!this.checkText(formData)) {
-        this.showAlert("Please fill in all fields.");
-        return;
+  import { ref } from 'vue';
+  import { useRouter } from 'vue-router';
+  
+  export default {
+    name: 'SignUpPage',
+    data() {
+      return {
+        firstName: '',
+        lastName: '',
+        bsn: '',
+        phoneNumber: '',
+        email: '',
+        password: ''
       }
-
-      try {
-        const response = await fetch('http://localhost:8080/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
-        });
-
-        const data = await this.handleApiResponse(response);
-
-        if (data.success) {
-          this.$router.push('/login');
-        } else if (data.error) {
-          this.handleRegistrationError(data.error);
-          this.showAlert(data.error);
+    },
+    setup() {
+      const router = useRouter();
+      return { router };
+    },
+    methods: {
+      async onSubmit() {
+        const formData = {
+          firstName: this.firstName,
+          lastName: this.lastName,
+          bsn: this.bsn,
+          phoneNumber: this.phoneNumber,
+          email: this.email,
+          password: this.password,
+        };
+  
+        // Check for empty fields
+        if (!this.checkText(formData)) {
+          this.showAlert("Please fill in all fields.");
+          return;
         }
-      } catch (error) {
-        this.logError(error, "SignUpPage", "SignUpPage.vue");
-        this.showAlert("An error occurred while registering, please try again later!");
+  
+        try {
+          const response = await fetch('http://localhost:8080/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+          });
+  
+          const data = await response.json();
+  
+          if (response.ok) {
+            this.router.push("/login");
+          } else if (data.error) {
+            this.handleRegistrationError(data.error);
+            this.showAlert(data.error);
+          }
+        } catch (error) {
+          this.logError(error, "SignUpPage", "SignUpPage.vue");
+          this.showAlert("An error occurred while registering, please try again later!");
+        }
+      },
+      checkText(fields) {
+        return Object.values(fields).every(value => value.trim() !== '');
+      },
+      handleRegistrationError(error) {
+        if (error.includes('email')) {
+          this.showAlert("The email address is already in use. Please use a different email.");
+        } else if (error.includes('bsn')) {
+          this.showAlert("The BSN is already registered. Please use a different BSN.");
+        } else {
+          this.showAlert(error);
+        }
+      },
+      showAlert(message) {
+        alert(message);
+      },
+      logError(error, context, location) {
+        console.error(`Error in ${context} at ${location}:`, error);
       }
-    },
-    checkText(fields) {
-      return Object.values(fields).every(value => value.trim() !== '');
-    },
-    async handleApiResponse(response) {
-      const data = await response.json();
-      if (response.ok) {
-        return data;
-      } else {
-        return Promise.reject(data);
-      }
-    },
-    handleRegistrationError(error) {
-      if (error.includes('email')) {
-        this.showAlert("The email address is already in use. Please use a different email.");
-      } else if (error.includes('bsn')) {
-        this.showAlert("The BSN is already registered. Please use a different BSN.");
-      } else {
-        this.showAlert(error);
-      }
-    },
-    showAlert(message) {
-      alert(message);
-    },
-    logError(error, context, location) {
-      console.error(`Error in ${context} at ${location}:`, error);
     }
   }
-}
-</script>
-
+  </script>
   
   <style scoped>
   .signup-container {
